@@ -69,8 +69,12 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/device_kernel
           ./scripts/config --file arch/arm64/configs/${{ env.DEFCONFIG_NAME }} \
+            --enable CONFIG_WLAN \
+            --enable CONFIG_WLAN_VENDOR_MEDIATEK \
+            --enable CONFIG_CFG80211 \
             --enable CONFIG_MAC80211 \
-            --module CONFIG_MT7601U
+            --enable CONFIG_MT7601U
+
 
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
