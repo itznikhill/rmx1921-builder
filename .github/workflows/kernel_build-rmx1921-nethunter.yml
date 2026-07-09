@@ -1,1 +1,82 @@
+name: Build rmx1921 Kernel (NetHunter)
 
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  DEVICE_NAME : "realme xt"
+  DEVICE_CODENAME : "rmx1921"
+
+  CUSTOM_CMDS : "CLANG_TRIPLE=aarch64-linux-gnu-"
+  EXTRA_CMDS : "BRAND_SHOW_FLAG=realme LLVM=1 LLVM_IAS=1 ld-name=lld LD=ld.lld LDFINAL_vmlinux=ld.lld LLVM_AR=llvm-ar LLVM_NM=llvm-nm LLVM_OBJCOPY=llvm-objcopy LLVM_OBJDUMP=llvm-objdump LLVM_STRIP=llvm-strip KCFLAGS=-fmax-errors=0"
+
+  KERNEL_SOURCE : "https://github.com/RassyMagenta/android_kernel_realme_sdm710.git"
+  KERNEL_BRANCH : "16KSU"
+
+  CLANG_SOURCE : "https://github.com/ZyCromerZ/Clang/releases/download/13.0.1-20230207-release/Clang-13.0.1-20230207.tar.gz"
+  CLANG_BRANCH : ""
+
+  GCC_GNU : false
+  GCC_64_SOURCE : "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9.git"
+  GCC_64_BRANCH : "android12L-release"
+  GCC_32_SOURCE : "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9.git"
+  GCC_32_BRANCH : "android12L-release"
+
+  DEFCONFIG_SOURCE: ""
+  DEFCONFIG_NAME : "sdm670-perf_defconfig"
+  DEFCONFIG_ORIGIN_IMAGE: ""
+  DEFCONFIG_FROM_BOOT: false
+
+  AK3_SOURCE : "https://github.com/RassyMagenta/AnyKernel3.git"
+  AK3_BRANCH : "rmx1921"
+
+  BOOT_SOURCE : ""
+
+  HAVE_NO_DTBO : false
+  HAVE_NO_DTBO_TOOL : true
+
+  ROM_TEXT : "NetHunter"
+
+  PYTHON_VERSION: "3"
+  PACK_METHOD: "Anykernel3"
+  GENERATE_DTB: "yes"
+  GENERATE_CHIP: "qcom"
+  BUILD_DEBUGGER: "true"
+  BUILD_OTHER_CONFIG: "false"
+  MERGE_CONFIG_FILES: ""
+
+jobs:
+  build-kernel:
+    name: Build rmx1921 Kernel (NetHunter)
+    runs-on: ubuntu-latest
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+
+    steps:
+      - name: ⏰ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⌛️ Compilation environment preparation
+        uses: ./.github/workflows/build-env
+
+      - name: ⚙️ Get neccssary tools
+        uses: ./.github/workflows/build-ready
+
+      - name: 🪛 NetHunter Kernel Options
+        run: |
+          cd $GITHUB_WORKSPACE/device_kernel
+          ./scripts/config --file arch/arm64/configs/${{ env.DEFCONFIG_NAME }} \
+            --enable CONFIG_MAC80211 \
+            --module CONFIG_MT7601U
+
+      - name: 🚀 Build Process
+        uses: ./.github/workflows/build-process
+
+      - name: 🔩 Pack Process
+        uses: ./.github/workflows/pack-process
+
+      - name: ✏️ Upload Artifacts
+        uses: ./.github/workflows/upload-files
